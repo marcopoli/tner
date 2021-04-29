@@ -83,16 +83,24 @@ class TransformersNER:
             sentence = self.transforms.tokenizer.decode(e, skip_special_tokens=True)
 
             pred = torch.max(logit[n], dim=-1)[1].cpu().tolist()
-            print(pred)
-            pred2 = torch.topk(logit[n], dim=-1, k = 3)[1].cpu().tolist()
-            print(pred2)
+            listPred = torch.topk(logit[n], dim=-1, k = 2)[1].cpu().tolist()
+            pred2 = []
+            for k in listPred:
+                pred2.append(k[1])
+
             activated = nn.Softmax(dim=-1)(logit[n])
             prob = torch.max(activated, dim=-1)[0].cpu().tolist()
+            listProb = torch.topk(activated, dim=-1, k=2)[0].cpu().tolist()
+            prob2 = []
+            for k in listProb:
+                prob2.append(k[1])
+
             pred = [self.id_to_label[_p] for _p in pred]
+            pred2 = [self.id_to_label[_p] for _p in pred2]
 
             tag_lists = self.decode_ner_tags(pred, prob)
-            print(pred)
-            print(tag_lists)
+            tag_lists2 = self.decode_ner_tags(pred2, prob2)
+
             _entities = []
             for tag, (start, end) in tag_lists:
                 mention = self.transforms.tokenizer.decode(e[start:end], skip_special_tokens=True)
@@ -108,5 +116,20 @@ class TransformersNER:
                           'probability': sum(prob[start: end])/(end - start)}
                 _entities.append(result)
 
-            entities.append({'entity': _entities, 'sentence': sentence})
+            _entities2 = []
+            for tag, (start, end) in tag_lists2:
+                mention = self.transforms.tokenizer.decode(e[start:end], skip_special_tokens=True)
+                print(mention)
+                if not len(mention.strip()): continue
+                start_char = len(self.transforms.tokenizer.decode(e[:start], skip_special_tokens=True))
+                if sentence[start_char] == ' ':
+                    start_char += 1
+                end_char = start_char + len(mention)
+                if mention != sentence[start_char:end_char]:
+                    logging.warning('entity mismatch: {} vs {}'.format(mention, sentence[start_char:end_char]))
+                result = {'type': tag, 'position': [start_char, end_char], 'mention': mention,
+                          'probability': sum(prob[start: end]) / (end - start)}
+                _entities2.append(result)
+
+            entities.append({'entity': _entities,'entity2': _entities2, 'sentence': sentence})
         return entities
