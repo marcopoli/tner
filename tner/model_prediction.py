@@ -92,6 +92,7 @@ class TransformersNER:
             _entities = []
             for tag, (start, end) in tag_lists:
                 mention = self.transforms.tokenizer.decode(e[start:end], skip_special_tokens=True)
+                print(mention)
                 if not len(mention.strip()): continue
                 start_char = len(self.transforms.tokenizer.decode(e[:start], skip_special_tokens=True))
                 if sentence[start_char] == ' ':
