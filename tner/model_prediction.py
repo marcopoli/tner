@@ -85,11 +85,10 @@ class TransformersNER:
             pred = torch.max(logit[n], dim=-1)[1].cpu().tolist()
             activated = nn.Softmax(dim=-1)(logit[n])
             prob = torch.max(activated, dim=-1)[0].cpu().tolist()
-            print(prob)
             pred = [self.id_to_label[_p] for _p in pred]
-            print(pred)
             tag_lists = self.decode_ner_tags(pred, prob)
-
+            print(pred)
+            print(tag_lists)
             _entities = []
             for tag, (start, end) in tag_lists:
                 mention = self.transforms.tokenizer.decode(e[start:end], skip_special_tokens=True)
