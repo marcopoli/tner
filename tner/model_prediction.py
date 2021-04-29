@@ -83,9 +83,13 @@ class TransformersNER:
             sentence = self.transforms.tokenizer.decode(e, skip_special_tokens=True)
 
             pred = torch.max(logit[n], dim=-1)[1].cpu().tolist()
+            print(pred.shape)
+            pred2 = torch.topk(logit[n], dim=-1, k = 3)[1].cpu().tolist()
+            print(pred2.shape)
             activated = nn.Softmax(dim=-1)(logit[n])
             prob = torch.max(activated, dim=-1)[0].cpu().tolist()
             pred = [self.id_to_label[_p] for _p in pred]
+
             tag_lists = self.decode_ner_tags(pred, prob)
             print(pred)
             print(tag_lists)
